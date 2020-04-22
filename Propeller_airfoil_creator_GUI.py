@@ -20,11 +20,13 @@ mainLabel.grid(row=1, column=0, columnspan=10, pady=5)
 
 # DEFINITIONS
 def submit_drone():
-    weight.get()
-    radio.get()
-    prop_num.get()
-    blade_num.get()
-    rpm.get()
+    # Asegurar que lo introducido es un valor correcto
+    # VER COMO SE HACE
+    int(weight.get())
+    int(radio.get())
+    int(prop_num.get())
+    int(blade_num.get())
+    int(rpm.get())
 
     preview_img = config_list[int(prop_num.get()) - 1]
     preview = Label(image=preview_img, bd=1, relief=SUNKEN)
@@ -37,10 +39,12 @@ def select_airfoil():
 
 
 def submit_analysis():
-    re.get()
-    mach.get()
-    a_i.get()
-    a_step.get()
+    # Asegurar que lo introducido es un valor correcto
+    # VER COMO SE HACE
+    int(re.get())
+    int(mach.get())
+    int(a_i.get())
+    int(a_step.get())
 
 
 
@@ -65,7 +69,7 @@ prop_num.grid(row=5, column=1, pady=1)
 
 blade_numLabel = Label(root, text="Number of blades")
 blade_numLabel.grid(row=6, column=0, pady=1)
-blade_num = Entry(root)
+blade_num = Spinbox(root, from_=1, to=4)
 blade_num.grid(row=6, column=1, pady=1)
 
 rpmLabel = Label(root, text="RPM [rpm]")
