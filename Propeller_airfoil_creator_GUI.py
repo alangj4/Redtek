@@ -4,9 +4,8 @@ from tkinter import *
 from PIL import ImageTk,Image
 from tkinter import filedialog
 import ttk
-import matplotlib as mpl
-import matplotlib.pylab as plt
 import math
+from aeropy import *
 
 
 HEIGHT = 900
@@ -39,6 +38,7 @@ lowframe.add(tab2, text='Find optimum airfoil')
 def submit_drone():
     # Asegurar que lo introducido es un valor correcto
     # VER COMO SE HACE
+    # Checkear que se han introducido todos los datos
     global weight
     global radio
     global prop_num
@@ -68,6 +68,9 @@ def submit_drone():
     power_reqLabel = Label(upframe, text=round(power_req, 3), width=9)
     power_reqLabel.place(relx=0.77, rely=0.2, anchor='w')
 
+    clearButton_drone = Button(upframe, text="Clear", command=clear_drone)
+    clearButton_drone.place(relx=0.138, rely=0.75, anchor='n')
+
 def clear_drone():
 
     weight_entry.delete(0, END)
@@ -85,26 +88,43 @@ def clear_drone():
     previewLabel = Label(upframe, text="Drone configuration")
     previewLabel.place(relx=0.5, rely=1, anchor='s')
 
+    clearButton_drone = Button(upframe, text="Clear", command=clear_drone, state='disable')
+    clearButton_drone.place(relx=0.138, rely=0.75, anchor='n')
+
 def select_airfoil():
     root.filename = filedialog.askopenfilename(initialdir="/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/", title="Select an airfoil geometry",)
     airfoil_sel = Label(airfoil_frame, text=root.filename)
-    airfoil_sel.grid(row=16, column=1, pady=1)
+    airfoil_sel.place(relx=0, rely=0.5, anchor='w')
 
 def submit_analysis():
     # Asegurar que lo introducido es un valor correcto
     # VER COMO SE HACE
+    # Checkear que se han introducido todos los datos
     re = float(re_entry.get())
     mach = float(mach_entry.get())
     alpha_i_from = float(alpha_i_from_entry.get())
     alpha_i_to = float(alpha_i_to_entry.get())
 
+    clearButton_analysis = Button(tab1, text="Clear", command=clear_analysis)
+    clearButton_analysis.place(relx=0.135, rely=0.37, anchor='n')
+
 def clear_analysis():
+    global airfoil_sel
 
     re_entry.delete(0, END)
     mach_entry.delete(0, END)
     alpha_i_from_entry.delete(0, END)
     alpha_i_to_entry.delete(0, END)
 
+    airfoil_frame = LabelFrame(tab1, bd=1)
+    airfoil_frame.configure(height=25, width=172)
+    airfoil_frame.grid_propagate(0)
+    airfoil_frame.place(relx=0.15, rely=0.28, anchor='w')
+    airfoil_sel = Label(airfoil_frame, text="No airfoil selected")
+    airfoil_sel.place(relx=0.15, rely=0.5, anchor='w')
+
+    clearButton_analysis = Button(tab1, text="Clear", command=clear_analysis, state='disable')
+    clearButton_analysis.place(relx=0.135, rely=0.37, anchor='n')
 
 # UPPER FRAME ###########
 # DRONE SETTINGS
@@ -123,12 +143,12 @@ radio_entry.place(relx=0.15, rely=0.3, anchor='w')
 
 prop_numLabel = Label(upframe, text="Number of propellers")
 prop_numLabel.place(relx=0, rely=0.4, anchor='w')
-prop_num_entry = Spinbox(upframe, from_=1, to=6)
+prop_num_entry = Spinbox(upframe, from_=1, to=6, state = 'readonly')
 prop_num_entry.place(relx=0.15, rely=0.4, anchor='w')
 
 blade_numLabel = Label(upframe, text="Number of blades")
 blade_numLabel.place(relx=0, rely=0.5, anchor='w')
-blade_num_entry = Spinbox(upframe, from_=2, to=4)
+blade_num_entry = Spinbox(upframe, from_=2, to=4, state = 'readonly')
 blade_num_entry.place(relx=0.15, rely=0.5, anchor='w')
 
 rpmLabel = Label(upframe, text="RPM [rpm]")
@@ -175,7 +195,7 @@ previewLabel.place(relx=0.5, rely=1, anchor='s')
 submitButton_drone = Button(upframe, text="Submit", command=submit_drone)
 submitButton_drone.place(relx=0.202, rely=0.75, anchor='n')
 
-clearButton_drone = Button(upframe, text="Clear", command=clear_drone)
+clearButton_drone = Button(upframe, text="Clear", command=clear_drone, state='disable')
 clearButton_drone.place(relx=0.138, rely=0.75, anchor='n')
 
 
@@ -218,13 +238,16 @@ airfoil_frame.place(relx=0.15, rely=0.28, anchor='w')
 airfoil_sel = Label(airfoil_frame, text="No airfoil selected")
 airfoil_sel.place(relx=0.15, rely=0.5, anchor='w')
 
+
 submitButton_analysis = Button(tab1, text="Submit", command=submit_analysis)
 submitButton_analysis.place(relx=0.2, rely=0.37, anchor='n')
 
-clearButton_analysis = Button(tab1, text="Clear", command=clear_analysis)
+
+
+
+
+clearButton_analysis = Button(tab1, text="Clear", command=clear_analysis, state='disable')
 clearButton_analysis.place(relx=0.135, rely=0.37, anchor='n')
-
-
 
 
 
