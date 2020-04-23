@@ -1,5 +1,6 @@
 from tkinter import *
 from PIL import ImageTk,Image
+from tkinter import filedialog
 
 HEIGHT = 900
 WIDTH = 1100
@@ -32,8 +33,10 @@ def submit_drone():
     int(rpm.get())
 
     preview_img = config_list[int(prop_num.get()) - 1]
-    preview = Label(image=preview_img, bd=1, relief=SUNKEN)
-    preview.place(relx=0.6, rely=0.07, relwidth=0.4, relheight=0.3)
+    preview = Label(upframe, image=preview_img, bd=1, relief=SUNKEN)
+    preview.place(relx=0.5, rely=0.04, anchor='n')
+    previewLabel = Label(upframe, text="Drone configuration")
+    previewLabel.place(relx=0.5, rely=1, anchor='s')
 
 def select_airfoil():
     root.filename = filedialog.askopenfilename(initialdir="/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/", title="Select an airfoil geometry",)
