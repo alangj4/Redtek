@@ -1,22 +1,25 @@
 from tkinter import *
 from PIL import ImageTk,Image
-from tkinter import filedialog
+
+HEIGHT = 900
+WIDTH = 1100
 
 root = Tk()
-root.title("Anacardo propeller creator")
+root.title("Redtek propeller creator")
 root.resizable(width=False, height=False)
 
+canvas = Canvas(root, height=HEIGHT, width=WIDTH)
+canvas.pack()
 
-
-# LOGO AND TITLE
 logo_Redtek = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/logo.jpg"))
-logo = Label(image=logo_Redtek, anchor=N)
-logo.grid(row=0, column= 0, columnspan=10, pady=20, sticky=N)
+logo = Label(canvas, image=logo_Redtek)
+logo.place(relx=0.5, anchor='n')
 
-mainLabel = Label(root, text="ANACARDO PROPELLER CREATOR", font='Helvetica 16 bold')
-mainLabel.grid(row=1, column=0, columnspan=10, pady=5)
+upframe = Frame(root)
+upframe.place(relx=0.5, rely=0.07, relwidth=0.95, relheight=0.3,anchor='n')
 
-
+lowframe = Frame(root)
+lowframe.place(relx=0.5, rely=0.4, relwidth=0.95, relheight=0.575,anchor='n')
 
 # DEFINITIONS
 def submit_drone():
@@ -30,13 +33,12 @@ def submit_drone():
 
     preview_img = config_list[int(prop_num.get()) - 1]
     preview = Label(image=preview_img, bd=1, relief=SUNKEN)
-    preview.grid(row=3, rowspan=6, column= 3, columnspan=6, padx= 30)
+    preview.place(relx=0.6, rely=0.07, relwidth=0.4, relheight=0.3)
 
 def select_airfoil():
     root.filename = filedialog.askopenfilename(initialdir="/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/", title="Select an airfoil geometry",)
     airfoil_sel = Label(airfoil_frame, text=root.filename)
     airfoil_sel.grid(row=16, column=1, pady=1)
-
 
 def submit_analysis():
     # Asegurar que lo introducido es un valor correcto
@@ -47,35 +49,35 @@ def submit_analysis():
     int(a_step.get())
 
 
-
+# UPPER FRAME ###########
 # DRONE SETTINGS
-titleLabel = Label(root, text="Drone characteristics", font='Helvetica 14 bold')
-titleLabel.grid(row=2, column=0, pady=10)
+titleDroneLabel = Label(upframe, text="Drone characteristics", font='Helvetica 16 bold')
+titleDroneLabel.place(relx=0.17, rely=0.1, anchor='s')
 
-weightLabel = Label(root, text="Drone weight [kg]")
-weightLabel.grid(row=3, column=0, pady=1)
-weight = Entry(root)
-weight.grid(row=3, column=1, pady=1)
+weightLabel = Label(upframe, text="Drone weight [kg]")
+weightLabel.place(relx=0, rely=0.2, anchor='w')
+weight = Entry(upframe)
+weight.place(relx=0.15, rely=0.2, anchor='w')
 
-radioLabel = Label(root, text="Propeller radio [m]")
-radioLabel.grid(row=4, column=0, pady=1)
-radio = Entry(root)
-radio.grid(row=4, column=1, pady=1)
+radioLabel = Label(upframe, text="Propeller radio [m]")
+radioLabel.place(relx=0, rely=0.3, anchor='w')
+radio = Entry(upframe)
+radio.place(relx=0.15, rely=0.3, anchor='w')
 
-prop_numLabel = Label(root, text="Number of propellers")
-prop_numLabel.grid(row=5, column=0, pady=1)
-prop_num = Spinbox(root, from_=1, to=6)
-prop_num.grid(row=5, column=1, pady=1)
+prop_numLabel = Label(upframe, text="Number of propellers")
+prop_numLabel.place(relx=0, rely=0.4, anchor='w')
+prop_num = Spinbox(upframe, from_=1, to=6)
+prop_num.place(relx=0.15, rely=0.4, anchor='w')
 
-blade_numLabel = Label(root, text="Number of blades")
-blade_numLabel.grid(row=6, column=0, pady=1)
-blade_num = Spinbox(root, from_=1, to=4)
-blade_num.grid(row=6, column=1, pady=1)
+blade_numLabel = Label(upframe, text="Number of blades")
+blade_numLabel.place(relx=0, rely=0.5, anchor='w')
+blade_num = Spinbox(upframe, from_=1, to=4)
+blade_num.place(relx=0.15, rely=0.5, anchor='w')
 
-rpmLabel = Label(root, text="RPM [rpm]")
-rpmLabel.grid(row=7, column=0, pady=1)
-rpm = Entry(root)
-rpm.grid(row=7, column=1, pady=1)
+rpmLabel = Label(upframe, text="RPM [rpm]")
+rpmLabel.place(relx=0, rely=0.6, anchor='w')
+rpm = Entry(upframe)
+rpm.place(relx=0.15, rely=0.6, anchor='w')
 
 # DRONE CONFIGURATIONS IMAGES
 config_1 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/config-1.png"))
@@ -89,59 +91,60 @@ config_list = [config_1, config_2, config_3, config_4, config_5, config_6]
 
 # INITIAL IMAGE
 preview_img = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/pr.png"))
-preview = Label(image=preview_img, bd=1, relief=SUNKEN)
-preview.grid(row=3, rowspan=6, column= 3, columnspan=6, padx= 30)
+preview = Label(upframe, image=preview_img, bd=1, relief=SUNKEN)
+preview.place(relx=0.5, rely=0.04, anchor='n')
 
-previewLabel = Label(root, text="Drone configuration")
-previewLabel.grid(row=10, column=3, columnspan=6)
-
-
-submitButton_drone = Button(root, text="Submit", command=submit_drone)
-submitButton_drone.grid(row=8, column=0, columnspan=2, pady=40)
+previewLabel = Label(upframe, text="Drone configuration")
+previewLabel.place(relx=0.5, rely=1, anchor='s')
 
 
+submitButton_drone = Button(upframe, text="Submit", command=submit_drone)
+submitButton_drone.place(relx=0.17, rely=0.75, anchor='n')
+
+
+# LOWER FRAME ###########
 
 # XFOIL ANALYSIS SETTINGS
-titleLabel = Label(root, text="Airfoil analysis", font='Helvetica 14 bold')
-titleLabel.grid(row=11, column=0, pady=10)
+titleXfoilLabel = Label(lowframe, text="Airfoil analysis", font='Helvetica 16 bold')
+titleXfoilLabel.place(relx=0.17, rely=0.052, anchor='s')
 
-reLabel = Label(root, text="Reynolds number")
-reLabel.grid(row=12, column=0, pady=1)
-re = Entry(root)
-re.grid(row=12, column=1, pady=1)
+reLabel = Label(lowframe, text="Reynolds number")
+reLabel.place(relx=0, rely=0.1, anchor='w')
+re = Entry(lowframe)
+re.place(relx=0.15, rely=0.1, anchor='w')
 
-machLabel = Label(root, text="Mach number")
-machLabel.grid(row=13, column=0, pady=1)
-mach = Entry(root)
-mach.grid(row=13, column=1, pady=1)
+machLabel = Label(lowframe, text="Mach number")
+machLabel.place(relx=0, rely=0.152, anchor='w')
+mach = Entry(lowframe)
+mach.place(relx=0.15, rely=0.152, anchor='w')
 
-a_iLabel = Label(root, text="Intital a")
-a_iLabel.grid(row=14, column=0, pady=1)
-a_i = Entry(root)
-a_i.grid(row=14, column=1, pady=1)
+a_iLabel = Label(lowframe, text="Intital a")
+a_iLabel.place(relx=0, rely=0.204, anchor='w')
+a_i = Entry(lowframe)
+a_i.place(relx=0.15, rely=0.204, anchor='w')
 
-a_stepLabel = Label(root, text="Steps a")
-a_stepLabel.grid(row=15, column=0, pady=1)
-a_step = Entry(root)
-a_step.grid(row=15, column=1, pady=1)
+a_stepLabel = Label(lowframe, text="Steps a")
+a_stepLabel.place(relx=0, rely=0.256, anchor='w')
+a_step = Entry(lowframe)
+a_step.place(relx=0.15, rely=0.256, anchor='w')
 
-airfoilButton_analysis = Button(root, text="Select an airofil", command=select_airfoil)
-airfoilButton_analysis.grid(row=16, column=0, pady=1)
-airfoil_frame = LabelFrame(root, bd=1)
-airfoil_frame.configure(height=25, width=168)
+airfoilButton_analysis = Button(lowframe, text="Select an airofil", command=select_airfoil)
+airfoilButton_analysis.place(relx=0, rely=0.308, anchor='w')
+airfoil_frame = LabelFrame(lowframe, bd=1)
+airfoil_frame.configure(height=25, width=172)
 airfoil_frame.grid_propagate(0)
-airfoil_frame.grid(row=16, column=1, pady=1)
+airfoil_frame.place(relx=0.15, rely=0.308, anchor='w')
 airfoil_sel = Label(airfoil_frame, text="No airfoil selected")
-airfoil_sel.grid(row=16, column=1, pady=1)
+airfoil_sel.place(relx=0.15, rely=0.5, anchor='w')
 
-submitButton_analysis = Button(root, text="Submit", command=submit_analysis)
-submitButton_analysis.grid(row=17, column=0, columnspan=2, pady=40)
+submitButton_analysis = Button(lowframe, text="Submit", command=submit_analysis)
+submitButton_analysis.place(relx=0.17, rely=0.386, anchor='n')
 
 
 
 
 # QUIT PROGRAM
-button_quit = Button (root, text="Close", command=root.quit)
-button_quit.grid(row=30, column=9)
+button_quit = Button (canvas, text="Close", command=root.quit)
+button_quit.place(relx=0.975, rely=0.035, anchor='e')
 
 root.mainloop()
