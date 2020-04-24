@@ -5,7 +5,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 from PIL import ImageTk,Image
 import ttk
-from aeropy import *
+import aeropy.xfoil_module as xf
 import math
 import numpy as np
 import matplotlib
@@ -61,6 +61,10 @@ plotframe.add(cl_cd_plot, text='CL vs. CD')
 tab2 = ttk.Frame(lowframe)
 lowframe.add(tab2, text='Find optimum airfoil')
 
+# TAB 3 CONFIGURATION
+tab3 = ttk.Frame(lowframe)
+lowframe.add(tab3, text='Airfoil comparison')
+
 
 ##############################################################################
 
@@ -113,12 +117,12 @@ def submit_drone():
         power_req = 0.5 * rho_mars * prop_area * v_1 ** 3  #[W]
 
         powerLabel = Label(upframe, text="Power required [W]")
-        powerLabel.place(relx=0.23, rely=0.9, anchor='w')
+        powerLabel.place(relx=0.22, rely=0.9, anchor='w')
         power_reqLabel = Label(upframe, text=round(power_req, 3), width=9)
-        power_reqLabel.place(relx=0.35, rely=0.9, anchor='w')
+        power_reqLabel.place(relx=0.34, rely=0.9, anchor='w')
 
         clearButton_drone = Button(upframe, text="Clear", command=clear_drone)
-        clearButton_drone.place(relx=0.288, rely=0.7, anchor='n')
+        clearButton_drone.place(relx=0.278, rely=0.7, anchor='n')
 
 def clear_drone():
 
@@ -129,9 +133,9 @@ def clear_drone():
     rpm_entry.delete(0, END)
 
     powerLabel = Label(upframe, text="                                       ")
-    powerLabel.place(relx=0.23, rely=0.9, anchor='w')
+    powerLabel.place(relx=0.22, rely=0.9, anchor='w')
     power_reqLabel = Label(upframe, text='', width=9)
-    power_reqLabel.place(relx=0.35, rely=0.9, anchor='w')
+    power_reqLabel.place(relx=0.34, rely=0.9, anchor='w')
 
     preview_img = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/pr.png"))
     preview = Label(upframe, image=preview_img, bd=1, relief=SUNKEN)
@@ -140,7 +144,8 @@ def clear_drone():
     previewLabel.place(relx=0.7, rely=1, anchor='s')
 
     clearButton_drone = Button(upframe, text="Clear", command=clear_drone, state='disable')
-    clearButton_drone.place(relx=0.288, rely=0.7, anchor='n')
+    clearButton_drone.place(relx=0.278, rely=0.7, anchor='n')
+
 
 def select_airfoil():
 
@@ -148,17 +153,18 @@ def select_airfoil():
     airfoil_sel = Label(airfoil_frame, text=root.filename)
     airfoil_sel.place(relx=1, rely=0.5, anchor='e')
 
-    coordinates = np.genfromtxt(root.filename, skip_header=2)
-    x1= coordinates[:,0]
-    y1= coordinates[:,1]
+    coordinates = np.genfromtxt(root.filename, skip_header=1)
+    x1 = coordinates[:,0]
+    y1 = coordinates[:,1]
     plot_figure = Figure(figsize=(5.5,2.2), dpi=100)
     plot = plot_figure.add_subplot(111)
+    plot.cla()
     plot.plot(x1, y1)
     plot.axis([0, 1, -0.2, 0.3])
     plot.tick_params(width=0.5, labelsize=6)
+
     for axis in ['top','bottom','left','right']:
         plot.spines[axis].set_linewidth(0.5)
-    plot.patch.set_facecolor('w')
 
     plot_geom = FigureCanvasTkAgg(plot_figure, master=geometryframe)
     plot_geom.show()
@@ -168,6 +174,13 @@ def select_airfoil():
     geomLabel = Label(geometryframe, text="Airfoil geometry")
     geomLabel.place(relx=0.5, rely=0.1, anchor='n')
 
+def findMiddle(input_list):
+    middle = float(len(input_list))/2
+    if middle % 2 != 0:
+        return input_list[int(middle - .5)]
+    else:
+        return (input_list[int(middle)], input_list[int(middle-1)])
+
 def submit_analysis():
     # Asegurar que lo introducido es un valor correcto
     # VER COMO SE HACE
@@ -176,6 +189,7 @@ def submit_analysis():
     global mach
     global alpha_from
     global alpha_to
+    global alpha_steps
 
     if len(re_entry.get()) == 0:
         messagebox.showwarning("Some values are missing", "The Reynolds number entry is empty")
@@ -185,9 +199,15 @@ def submit_analysis():
         mach = float(mach_entry.get())
         alpha_from = float(alpha_from_entry.get())
         alpha_to = float(alpha_to_entry.get())
+        alpha_steps = float(alpha_steps_entry.get())
 
         clearButton_analysis = Button(tab1, text="Clear", command=clear_analysis)
         clearButton_analysis.place(relx=0.235, rely=0.4, anchor='n')
+
+        airfoil = np.genfromtxt(root.filename, skip_header=2)
+        alpha_list = np.arange(alpha_from, alpha_to + alpha_steps, alpha_steps)
+        xf.call(airfoil, alfas='alpha_list', output='Cp', Reynolds=re, Mach=mach, iteration=100, NORM=True)
+
 
 def clear_analysis():
     global airfoil_sel
@@ -246,6 +266,17 @@ def on_focusout_ato(event):
         alpha_to_entry.insert(0, '20')
         alpha_to_entry.config(fg = 'grey')
 
+def on_entry_click_astep(event):
+    if alpha_steps_entry.get() == '0.25':
+        alpha_steps_entry.delete(0, END)
+        alpha_steps_entry.insert(0, '')
+        alpha_steps_entry.config(fg='black')
+
+def on_focusout_astep(event):
+    if alpha_steps_entry.get() == '':
+        alpha_steps_entry.insert(0, '0.25')
+        alpha_steps_entry.config(fg = 'grey')
+
 
 ##############################################################################
 
@@ -255,7 +286,7 @@ def on_focusout_ato(event):
 
 # DRONE SETTINGS
 titleDroneLabel = Label(upframe, text="Drone characteristics", font='Helvetica 16 bold')
-titleDroneLabel.place(relx=0.32, rely=0.1, anchor='s')
+titleDroneLabel.place(relx=0.31, rely=0.1, anchor='s')
 
 weightLabel = Label(upframe, text="Drone weight [kg]")
 weightLabel.place(relx=0.15, rely=0.2, anchor='w')
@@ -319,10 +350,10 @@ previewLabel.place(relx=0.7, rely=1, anchor='s')
 
 
 submitButton_drone = Button(upframe, text="Submit", command=submit_drone)
-submitButton_drone.place(relx=0.352, rely=0.7, anchor='n')
+submitButton_drone.place(relx=0.342, rely=0.7, anchor='n')
 
 clearButton_drone = Button(upframe, text="Clear", command=clear_drone, state='disable')
-clearButton_drone.place(relx=0.288, rely=0.7, anchor='n')
+clearButton_drone.place(relx=0.278, rely=0.7, anchor='n')
 
 
 
@@ -336,60 +367,76 @@ clearButton_drone.place(relx=0.288, rely=0.7, anchor='n')
 # TAB 1 CONTENT - XFOIL ANALYSIS SETTINGS
 #########################################
 title1Label = Label(tab1, text="Analysis parameters", font='Helvetica 16 bold')
-title1Label.place(relx=0.26, rely=0.1, anchor='s')
+title1Label.place(relx=0.26, rely=0.07, anchor='s')
 
 reLabel = Label(tab1, text="Reynolds number")
-reLabel.place(relx=0.1, rely=0.16, anchor='w')
+reLabel.place(relx=0.1, rely=0.12, anchor='w')
 re_entry = Entry(tab1)
-re_entry.place(relx=0.25, rely=0.16, anchor='w')
+re_entry.place(relx=0.25, rely=0.12, anchor='w')
 
 machLabel = Label(tab1, text="Mach number")
-machLabel.place(relx=0.1, rely=0.22, anchor='w')
+machLabel.place(relx=0.1, rely=0.18, anchor='w')
 mach_entry = Entry(tab1)
-mach_entry.place(relx=0.25, rely=0.22, anchor='w')
+mach_entry.place(relx=0.25, rely=0.18, anchor='w')
 mach_entry.insert(END, '0.7')
 mach_entry.bind('<FocusIn>', on_entry_click_mach)
 mach_entry.bind('<FocusOut>', on_focusout_mach)
 mach_entry.configure(fg='grey')
 
 alphaLabel = Label(tab1, text="Angle of attack α")
-alphaLabel.place(relx=0.1, rely=0.28, anchor='w')
+alphaLabel.place(relx=0.1, rely=0.24, anchor='w')
 alphaFromLabel = Label(tab1, text="from")
-alphaFromLabel.place(relx=0.25, rely=0.28, anchor='w')
+alphaFromLabel.place(relx=0.25, rely=0.24, anchor='w')
 alpha_from_entry = Entry(tab1, width=5)
-alpha_from_entry.place(relx=0.285, rely=0.28, anchor='w')
+alpha_from_entry.place(relx=0.285, rely=0.24, anchor='w')
 alpha_from_entry.insert(END, '-20')
 alpha_from_entry.bind('<FocusIn>', on_entry_click_afrom)
 alpha_from_entry.bind('<FocusOut>', on_focusout_afrom)
 alpha_from_entry.configure(fg='grey')
 alphaToLabel = Label(tab1, text="to")
-alphaToLabel.place(relx=0.345, rely=0.28, anchor='w')
+alphaToLabel.place(relx=0.345, rely=0.24, anchor='w')
 alpha_to_entry = Entry(tab1, width=5)
-alpha_to_entry.place(relx=0.365, rely=0.28, anchor='w')
+alpha_to_entry.place(relx=0.365, rely=0.24, anchor='w')
 alpha_to_entry.insert(END, '20')
 alpha_to_entry.bind('<FocusIn>', on_entry_click_ato)
 alpha_to_entry.bind('<FocusOut>', on_focusout_ato)
 alpha_to_entry.configure(fg='grey')
 
-airfoilButton_analysis = Button(tab1, text="Select an airfoil", command=select_airfoil)
-airfoilButton_analysis.place(relx=0.1, rely=0.34, anchor='w')
+alpha_stepsLabel = Label(tab1, text="α increment")
+alpha_stepsLabel.place(relx=0.1, rely=0.3, anchor='w')
+alpha_steps_entry = Entry(tab1)
+alpha_steps_entry.place(relx=0.25, rely=0.3, anchor='w')
+alpha_steps_entry.insert(END, '0.25')
+alpha_steps_entry.bind('<FocusIn>', on_entry_click_astep)
+alpha_steps_entry.bind('<FocusOut>', on_focusout_astep)
+alpha_steps_entry.configure(fg='grey')
+
+
+airfoilButton = Button(tab1, text="Select an airfoil", command=select_airfoil)
+airfoilButton.place(relx=0.1, rely=0.36, anchor='w')
 
 airfoil_frame = LabelFrame(tab1, bd=1)
 airfoil_frame.configure(height=25, width=172)
 airfoil_frame.grid_propagate(0)
-airfoil_frame.place(relx=0.25, rely=0.34, anchor='w')
+airfoil_frame.place(relx=0.25, rely=0.36, anchor='w')
 airfoil_sel = Label(airfoil_frame, text="No airfoil selected")
 airfoil_sel.place(relx=0.5, anchor='n')
 
 submitButton_analysis = Button(tab1, text="Submit", command=submit_analysis)
-submitButton_analysis.place(relx=0.3, rely=0.4, anchor='n')
+submitButton_analysis.place(relx=0.29, rely=0.41, anchor='n')
 
 clearButton_analysis = Button(tab1, text="Clear", command=clear_analysis, state='disable')
-clearButton_analysis.place(relx=0.235, rely=0.4, anchor='n')
+clearButton_analysis.place(relx=0.225, rely=0.41, anchor='n')
 
 geomLabel = Label(geometryframe, text="Airfoil geometry")
 geomLabel.place(relx=0.5, anchor='n')
 
+
+
+
+######################################
+# TAB 2 CONTENT - FIND OPTIMUM AIRFOIL
+######################################
 
 # CALCULATIONS
 # REFERENCE VALUES
@@ -460,11 +507,6 @@ cl_i = 1   # By default
 #
 #    # Obtaining the angle of attack, lift coefficient, drag coefficient and momentum coefficient of the airfoil
 #    a, cl, cd, cm = xf.aseq(0, 30, 0.5)
-
-
-######################################
-# TAB 2 CONTENT - FIND OPTIMUM AIRFOIL
-######################################
 
 
 
