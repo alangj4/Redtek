@@ -1,12 +1,19 @@
 # -*- coding: utf-8 -*-
 
 from tkinter import *
-from PIL import ImageTk,Image
 from tkinter import filedialog
 from tkinter import messagebox
+from PIL import ImageTk,Image
 import ttk
-import math
 from aeropy import *
+import math
+import numpy as np
+import matplotlib
+matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+
 
 ##############################################################################
 
@@ -38,7 +45,7 @@ lowframe.place(relx=0.5, rely=0.4, relwidth=0.99, relheight=0.575, anchor='n')
 tab1 = ttk.Frame(lowframe)
 lowframe.add(tab1, text='Airfoil analysis')
 
-geometryframe = Frame(tab1, bd=1, relief=SUNKEN)
+geometryframe = Canvas(tab1)
 geometryframe.place(relx=0.265, rely=0.5, relwidth=0.5, relheight=0.46, anchor='n')
 
 plotframe = ttk.Notebook(tab1)
@@ -95,9 +102,9 @@ def submit_drone():
 
         preview_img = config_list[(prop_num - 1) * 3 + (blade_num -2)]
         preview = Label(upframe, image=preview_img, bd=1, relief=SUNKEN)
-        preview.place(relx=0.75, rely=0.04, anchor='n')
+        preview.place(relx=0.7, rely=0.04, anchor='n')
         previewLabel = Label(upframe, text="Drone configuration")
-        previewLabel.place(relx=0.75, rely=1, anchor='s')
+        previewLabel.place(relx=0.7, rely=1, anchor='s')
 
         # POWER REQUIREMENTS & SOME CALCULATIONS
         prop_omega = rpm * float(math.pi) / float(30)  #[rad/s]
@@ -106,12 +113,12 @@ def submit_drone():
         power_req = 0.5 * rho_mars * prop_area * v_1 ** 3  #[W]
 
         powerLabel = Label(upframe, text="Power required [W]")
-        powerLabel.place(relx=0.28, rely=0.9, anchor='w')
+        powerLabel.place(relx=0.23, rely=0.9, anchor='w')
         power_reqLabel = Label(upframe, text=round(power_req, 3), width=9)
-        power_reqLabel.place(relx=0.4, rely=0.9, anchor='w')
+        power_reqLabel.place(relx=0.35, rely=0.9, anchor='w')
 
         clearButton_drone = Button(upframe, text="Clear", command=clear_drone)
-        clearButton_drone.place(relx=0.338, rely=0.7, anchor='n')
+        clearButton_drone.place(relx=0.288, rely=0.7, anchor='n')
 
 def clear_drone():
 
@@ -122,23 +129,44 @@ def clear_drone():
     rpm_entry.delete(0, END)
 
     powerLabel = Label(upframe, text="                                       ")
-    powerLabel.place(relx=0.08, rely=0.9, anchor='w')
+    powerLabel.place(relx=0.23, rely=0.9, anchor='w')
     power_reqLabel = Label(upframe, text='', width=9)
-    power_reqLabel.place(relx=0.2, rely=0.9, anchor='w')
+    power_reqLabel.place(relx=0.35, rely=0.9, anchor='w')
 
     preview_img = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/pr.png"))
     preview = Label(upframe, image=preview_img, bd=1, relief=SUNKEN)
-    preview.place(relx=0.75, rely=0.04, anchor='n')
+    preview.place(relx=0.7, rely=0.04, anchor='n')
     previewLabel = Label(upframe, text="Drone configuration")
-    previewLabel.place(relx=0.75, rely=1, anchor='s')
+    previewLabel.place(relx=0.7, rely=1, anchor='s')
 
     clearButton_drone = Button(upframe, text="Clear", command=clear_drone, state='disable')
-    clearButton_drone.place(relx=0.338, rely=0.7, anchor='n')
+    clearButton_drone.place(relx=0.288, rely=0.7, anchor='n')
 
 def select_airfoil():
+
     root.filename = filedialog.askopenfilename(initialdir="/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/", title="Select an airfoil geometry", filetypes=((".dat files", "*.dat"),(".txt files", "*.txt")))
     airfoil_sel = Label(airfoil_frame, text=root.filename)
     airfoil_sel.place(relx=1, rely=0.5, anchor='e')
+
+    coordinates = np.genfromtxt(root.filename, skip_header=2)
+    x1= coordinates[:,0]
+    y1= coordinates[:,1]
+    plot_figure = Figure(figsize=(5.5,2.2), dpi=100)
+    plot = plot_figure.add_subplot(111)
+    plot.plot(x1, y1)
+    plot.axis([0, 1, -0.2, 0.3])
+    plot.tick_params(width=0.5, labelsize=6)
+    for axis in ['top','bottom','left','right']:
+        plot.spines[axis].set_linewidth(0.5)
+    plot.patch.set_facecolor('w')
+
+    plot_geom = FigureCanvasTkAgg(plot_figure, master=geometryframe)
+    plot_geom.show()
+    plot_geom.get_tk_widget().place(relx=0.48, rely=1.035, anchor='s')
+
+#Printear el nombre del perfil sacado de root.filename
+    geomLabel = Label(geometryframe, text="Airfoil geometry")
+    geomLabel.place(relx=0.5, rely=0.1, anchor='n')
 
 def submit_analysis():
     # Asegurar que lo introducido es un valor correcto
@@ -227,32 +255,32 @@ def on_focusout_ato(event):
 
 # DRONE SETTINGS
 titleDroneLabel = Label(upframe, text="Drone characteristics", font='Helvetica 16 bold')
-titleDroneLabel.place(relx=0.37, rely=0.1, anchor='s')
+titleDroneLabel.place(relx=0.32, rely=0.1, anchor='s')
 
 weightLabel = Label(upframe, text="Drone weight [kg]")
-weightLabel.place(relx=0.2, rely=0.2, anchor='w')
+weightLabel.place(relx=0.15, rely=0.2, anchor='w')
 weight_entry = Entry(upframe)
-weight_entry.place(relx=0.35, rely=0.2, anchor='w')
+weight_entry.place(relx=0.3, rely=0.2, anchor='w')
 
 radioLabel = Label(upframe, text="Propeller radio [m]")
-radioLabel.place(relx=0.2, rely=0.3, anchor='w')
+radioLabel.place(relx=0.15, rely=0.3, anchor='w')
 radio_entry = Entry(upframe)
-radio_entry.place(relx=0.35, rely=0.3, anchor='w')
+radio_entry.place(relx=0.3, rely=0.3, anchor='w')
 
 prop_numLabel = Label(upframe, text="Number of propellers")
-prop_numLabel.place(relx=0.2, rely=0.4, anchor='w')
+prop_numLabel.place(relx=0.15, rely=0.4, anchor='w')
 prop_num_entry = Spinbox(upframe, from_=1, to=6, state = 'readonly')
-prop_num_entry.place(relx=0.35, rely=0.4, anchor='w')
+prop_num_entry.place(relx=0.3, rely=0.4, anchor='w')
 
 blade_numLabel = Label(upframe, text="Number of blades")
-blade_numLabel.place(relx=0.2, rely=0.5, anchor='w')
+blade_numLabel.place(relx=0.15, rely=0.5, anchor='w')
 blade_num_entry = Spinbox(upframe, from_=2, to=4, state = 'readonly')
-blade_num_entry.place(relx=0.35, rely=0.5, anchor='w')
+blade_num_entry.place(relx=0.3, rely=0.5, anchor='w')
 
 rpmLabel = Label(upframe, text="RPM [rpm]")
-rpmLabel.place(relx=0.2, rely=0.6, anchor='w')
+rpmLabel.place(relx=0.15, rely=0.6, anchor='w')
 rpm_entry = Entry(upframe)
-rpm_entry.place(relx=0.35, rely=0.6, anchor='w')
+rpm_entry.place(relx=0.3, rely=0.6, anchor='w')
 
 # DRONE CONFIGURATIONS IMAGES
 config_12 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-1.2.png"))
@@ -284,17 +312,17 @@ config_list = [config_12, config_13, config_14,
 # INITIAL IMAGE
 preview_img = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/pr.png"))
 preview = Label(upframe, image=preview_img, bd=1, relief=SUNKEN)
-preview.place(relx=0.75, rely=0.04, anchor='n')
+preview.place(relx=0.7, rely=0.04, anchor='n')
 
 previewLabel = Label(upframe, text="Drone configuration")
-previewLabel.place(relx=0.75, rely=1, anchor='s')
+previewLabel.place(relx=0.7, rely=1, anchor='s')
 
 
 submitButton_drone = Button(upframe, text="Submit", command=submit_drone)
-submitButton_drone.place(relx=0.402, rely=0.7, anchor='n')
+submitButton_drone.place(relx=0.352, rely=0.7, anchor='n')
 
 clearButton_drone = Button(upframe, text="Clear", command=clear_drone, state='disable')
-clearButton_drone.place(relx=0.338, rely=0.7, anchor='n')
+clearButton_drone.place(relx=0.288, rely=0.7, anchor='n')
 
 
 
