@@ -227,15 +227,18 @@ def submit_analysis():
 
         a = xf.aseq(alpha_from, alpha_to, alpha_steps)
         cl = xf.aseq(alpha_from, alpha_to, alpha_steps)
+        cd = xf.aseq(alpha_from, alpha_to, alpha_steps)
 
-        #print(cl) #Para comprobar si salen bien los datos
+        title = 'naca0012' + ' ' + 'Re=' + str(round(re)) + '' + ' M' + str(round(mach))
 
+        # PLOT CL VS. ALPHA
         plot_figure = Figure(figsize=(5,5), dpi=100)
         plot = plot_figure.add_subplot(111)
         plot.cla()
         plot.plot(a, cl)
         plot.axis([-25, 25, -3, 3])
         plot.tick_params(width=0.5, labelsize=7)
+        plot.set_title(title)
         plot.set_xlabel('alpha')
         plot.set_ylabel('Cl')
 
@@ -244,7 +247,43 @@ def submit_analysis():
 
         plot_cl = FigureCanvasTkAgg(plot_figure, master=cl_plot)
         plot_cl.draw()
-        plot_cl.get_tk_widget().pack()        #place(relx=0.5, rely=0.97, anchor='s')
+        plot_cl.get_tk_widget().pack()
+
+        # PLOT CD VS. ALPHA
+        plot_figure = Figure(figsize=(5,5), dpi=100)
+        plot = plot_figure.add_subplot(111)
+        plot.cla()
+        plot.plot(a, cd)
+        plot.axis([-25, 25, -3, 3])
+        plot.tick_params(width=0.5, labelsize=7)
+        plot.set_title(title)
+        plot.set_xlabel('alpha')
+        plot.set_ylabel('Cd')
+
+        for axis in ['top','bottom','left','right']:
+            plot.spines[axis].set_linewidth(0.5)
+
+        plot_cl = FigureCanvasTkAgg(plot_figure, master=cd_plot)
+        plot_cl.draw()
+        plot_cl.get_tk_widget().pack()
+
+        # PLOT CL VS. CD
+        plot_figure = Figure(figsize=(5,5), dpi=100)
+        plot = plot_figure.add_subplot(111)
+        plot.cla()
+        plot.plot(cd, cl)
+        plot.axis([-25, 25, -3, 3])
+        plot.tick_params(width=0.5, labelsize=7)
+        plot.set_title(title)
+        plot.set_xlabel('Cd')
+        plot.set_ylabel('Cl')
+
+        for axis in ['top','bottom','left','right']:
+            plot.spines[axis].set_linewidth(0.5)
+
+        plot_cl = FigureCanvasTkAgg(plot_figure, master=cl_cd_plot)
+        plot_cl.draw()
+        plot_cl.get_tk_widget().pack()
 
 def clear_analysis():
     global airfoil_sel
