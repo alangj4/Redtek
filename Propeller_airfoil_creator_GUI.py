@@ -4,8 +4,7 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
 from PIL import ImageTk,Image
-import ttk
-import aeropy.xfoil_module as xf
+from tkinter import ttk
 import math
 import numpy as np
 import matplotlib
@@ -13,6 +12,8 @@ matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import xfoil as xf
+from xfoil import XFoil
 
 
 ##############################################################################
@@ -31,7 +32,7 @@ root.resizable(width=False, height=False)
 canvas = Canvas(root, height=HEIGHT, width=WIDTH)
 canvas.pack()
 
-logo_Redtek = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/logo.jpg"))
+logo_Redtek = ImageTk.PhotoImage(Image.open("logo.jpg"))
 logo = Label(canvas, image=logo_Redtek)
 logo.place(relx=0.5, anchor='n')
 
@@ -137,7 +138,7 @@ def clear_drone():
     power_reqLabel = Label(upframe, text='', width=9)
     power_reqLabel.place(relx=0.34, rely=0.9, anchor='w')
 
-    preview_img = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/pr.png"))
+    preview_img = ImageTk.PhotoImage(Image.open("pr.png"))
     preview = Label(upframe, image=preview_img, bd=1, relief=SUNKEN)
     preview.place(relx=0.7, rely=0.04, anchor='n')
     previewLabel = Label(upframe, text="Drone configuration")
@@ -149,7 +150,7 @@ def clear_drone():
 
 def select_airfoil():
 
-    root.filename = filedialog.askopenfilename(initialdir="/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/", title="Select an airfoil geometry", filetypes=((".dat files", "*.dat"),(".txt files", "*.txt")))
+    root.filename = filedialog.askopenfilename(initialdir="", title="Select an airfoil geometry", filetypes=((".dat files", "*.dat"),(".txt files", "*.txt")))
     airfoil_sel = Label(airfoil_frame, text=root.filename)
     airfoil_sel.place(relx=1, rely=0.5, anchor='e')
 
@@ -161,18 +162,18 @@ def select_airfoil():
     plot.cla()
     plot.plot(x1, y1)
     plot.axis([0, 1, -0.2, 0.3])
-    plot.tick_params(width=0.5, labelsize=6)
+    plot.tick_params(width=0.5, labelsize=7)
 
     for axis in ['top','bottom','left','right']:
         plot.spines[axis].set_linewidth(0.5)
 
     plot_geom = FigureCanvasTkAgg(plot_figure, master=geometryframe)
-    plot_geom.show()
-    plot_geom.get_tk_widget().place(relx=0.48, rely=1.035, anchor='s')
+    plot_geom.draw()
+    plot_geom.get_tk_widget().place(relx=0.5, rely=0.97, anchor='s')
 
 #Printear el nombre del perfil sacado de root.filename
     geomLabel = Label(geometryframe, text="Airfoil geometry")
-    geomLabel.place(relx=0.5, rely=0.1, anchor='n')
+    geomLabel.place(relx=0.5, anchor='n')
 
 def findMiddle(input_list):
     middle = float(len(input_list))/2
@@ -204,9 +205,30 @@ def submit_analysis():
         clearButton_analysis = Button(tab1, text="Clear", command=clear_analysis)
         clearButton_analysis.place(relx=0.235, rely=0.4, anchor='n')
 
-        airfoil = np.genfromtxt(root.filename, skip_header=2)
-        alpha_list = np.arange(alpha_from, alpha_to + alpha_steps, alpha_steps)
-        xf.call(airfoil, alfas='alpha_list', output='Cp', Reynolds=re, Mach=mach, iteration=100, NORM=True)
+
+        #    # XFOIL #######
+        #    # Import an airfoil
+        #    from xfoil.test import XXXXX
+        #    xf.airfoil = XXXXX
+
+        #    # Setting up the analysis parameters
+        #    xf.Re = re
+        #    xf.max_iter = 100
+        #    xf.M = 0.7
+        #
+        #    # Obtaining the angle of attack, lift coefficient, drag coefficient and momentum coefficient of the airfoil
+        #    a, cl, cd, cm = xf.aseq(0, 30, 0.5)
+
+        xf = XFoil ()
+
+        xf.Re = re
+        xf.M = mach
+        xf.max_iter = 100
+        xf.airfoil = np.genfromtxt(root.filename) #, skip_header=2
+
+        a, cl, cd, cm = xf.aseq(alpha_from, alpha_to, alpha_steps)
+
+        print(a, cl) #Para comprobar si salen bien los datos 
 
 
 def clear_analysis():
@@ -285,53 +307,53 @@ def on_focusout_astep(event):
 ##############################################################################
 
 # DRONE SETTINGS
-titleDroneLabel = Label(upframe, text="Drone characteristics", font='Helvetica 16 bold')
+titleDroneLabel = Label(upframe, text="Drone characteristics", font='default 16 bold')
 titleDroneLabel.place(relx=0.31, rely=0.1, anchor='s')
 
 weightLabel = Label(upframe, text="Drone weight [kg]")
 weightLabel.place(relx=0.15, rely=0.2, anchor='w')
-weight_entry = Entry(upframe)
+weight_entry = Entry(upframe, width=18)
 weight_entry.place(relx=0.3, rely=0.2, anchor='w')
 
 radioLabel = Label(upframe, text="Propeller radio [m]")
 radioLabel.place(relx=0.15, rely=0.3, anchor='w')
-radio_entry = Entry(upframe)
+radio_entry = Entry(upframe, width=18)
 radio_entry.place(relx=0.3, rely=0.3, anchor='w')
 
 prop_numLabel = Label(upframe, text="Number of propellers")
 prop_numLabel.place(relx=0.15, rely=0.4, anchor='w')
-prop_num_entry = Spinbox(upframe, from_=1, to=6, state = 'readonly')
+prop_num_entry = Spinbox(upframe, from_=1, to=6, state = 'readonly', width=18)
 prop_num_entry.place(relx=0.3, rely=0.4, anchor='w')
 
 blade_numLabel = Label(upframe, text="Number of blades")
 blade_numLabel.place(relx=0.15, rely=0.5, anchor='w')
-blade_num_entry = Spinbox(upframe, from_=2, to=4, state = 'readonly')
+blade_num_entry = Spinbox(upframe, from_=2, to=4, state = 'readonly', width=18)
 blade_num_entry.place(relx=0.3, rely=0.5, anchor='w')
 
 rpmLabel = Label(upframe, text="RPM [rpm]")
 rpmLabel.place(relx=0.15, rely=0.6, anchor='w')
-rpm_entry = Entry(upframe)
+rpm_entry = Entry(upframe, width=18)
 rpm_entry.place(relx=0.3, rely=0.6, anchor='w')
 
 # DRONE CONFIGURATIONS IMAGES
-config_12 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-1.2.png"))
-config_13 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-1.3.png"))
-config_14 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-1.4.png"))
-config_22 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-2.2.png"))
-config_23 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-2.3.png"))
-config_24 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-2.4.png"))
-config_32 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-3.2.png"))
-config_33 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-3.3.png"))
-config_34 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-3.4.png"))
-config_42 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-4.2.png"))
-config_43 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-4.3.png"))
-config_44 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-4.4.png"))
-config_52 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-5.2.png"))
-config_53 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-5.3.png"))
-config_54 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-5.4.png"))
-config_62 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-6.2.png"))
-config_63 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-6.3.png"))
-config_64 = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/drone_config/config-6.4.png"))
+config_12 = ImageTk.PhotoImage(Image.open("drone_config/config-1.2.png"))
+config_13 = ImageTk.PhotoImage(Image.open("drone_config/config-1.3.png"))
+config_14 = ImageTk.PhotoImage(Image.open("drone_config/config-1.4.png"))
+config_22 = ImageTk.PhotoImage(Image.open("drone_config/config-2.2.png"))
+config_23 = ImageTk.PhotoImage(Image.open("drone_config/config-2.3.png"))
+config_24 = ImageTk.PhotoImage(Image.open("drone_config/config-2.4.png"))
+config_32 = ImageTk.PhotoImage(Image.open("drone_config/config-3.2.png"))
+config_33 = ImageTk.PhotoImage(Image.open("drone_config/config-3.3.png"))
+config_34 = ImageTk.PhotoImage(Image.open("drone_config/config-3.4.png"))
+config_42 = ImageTk.PhotoImage(Image.open("drone_config/config-4.2.png"))
+config_43 = ImageTk.PhotoImage(Image.open("drone_config/config-4.3.png"))
+config_44 = ImageTk.PhotoImage(Image.open("drone_config/config-4.4.png"))
+config_52 = ImageTk.PhotoImage(Image.open("drone_config/config-5.2.png"))
+config_53 = ImageTk.PhotoImage(Image.open("drone_config/config-5.3.png"))
+config_54 = ImageTk.PhotoImage(Image.open("drone_config/config-5.4.png"))
+config_62 = ImageTk.PhotoImage(Image.open("drone_config/config-6.2.png"))
+config_63 = ImageTk.PhotoImage(Image.open("drone_config/config-6.3.png"))
+config_64 = ImageTk.PhotoImage(Image.open("drone_config/config-6.4.png"))
 
 config_list = [config_12, config_13, config_14,
     config_22, config_23, config_24,
@@ -341,7 +363,7 @@ config_list = [config_12, config_13, config_14,
     config_62, config_63, config_64]
 
 # INITIAL IMAGE
-preview_img = ImageTk.PhotoImage(Image.open("/Users/alangarcia/Desktop/REDTEK/Mechanics/Propeller code/Repo/Redtek/pr.png"))
+preview_img = ImageTk.PhotoImage(Image.open("pr.png"))
 preview = Label(upframe, image=preview_img, bd=1, relief=SUNKEN)
 preview.place(relx=0.7, rely=0.04, anchor='n')
 
@@ -366,17 +388,17 @@ clearButton_drone.place(relx=0.278, rely=0.7, anchor='n')
 #########################################
 # TAB 1 CONTENT - XFOIL ANALYSIS SETTINGS
 #########################################
-title1Label = Label(tab1, text="Analysis parameters", font='Helvetica 16 bold')
+title1Label = Label(tab1, text="Analysis parameters", font='default 16 bold')
 title1Label.place(relx=0.26, rely=0.07, anchor='s')
 
 reLabel = Label(tab1, text="Reynolds number")
 reLabel.place(relx=0.1, rely=0.12, anchor='w')
-re_entry = Entry(tab1)
+re_entry = Entry(tab1, width=18)
 re_entry.place(relx=0.25, rely=0.12, anchor='w')
 
 machLabel = Label(tab1, text="Mach number")
 machLabel.place(relx=0.1, rely=0.18, anchor='w')
-mach_entry = Entry(tab1)
+mach_entry = Entry(tab1, width=18)
 mach_entry.place(relx=0.25, rely=0.18, anchor='w')
 mach_entry.insert(END, '0.7')
 mach_entry.bind('<FocusIn>', on_entry_click_mach)
@@ -394,9 +416,9 @@ alpha_from_entry.bind('<FocusIn>', on_entry_click_afrom)
 alpha_from_entry.bind('<FocusOut>', on_focusout_afrom)
 alpha_from_entry.configure(fg='grey')
 alphaToLabel = Label(tab1, text="to")
-alphaToLabel.place(relx=0.345, rely=0.24, anchor='w')
+alphaToLabel.place(relx=0.342, rely=0.24, anchor='w')
 alpha_to_entry = Entry(tab1, width=5)
-alpha_to_entry.place(relx=0.365, rely=0.24, anchor='w')
+alpha_to_entry.place(relx=0.362, rely=0.24, anchor='w')
 alpha_to_entry.insert(END, '20')
 alpha_to_entry.bind('<FocusIn>', on_entry_click_ato)
 alpha_to_entry.bind('<FocusOut>', on_focusout_ato)
@@ -404,7 +426,7 @@ alpha_to_entry.configure(fg='grey')
 
 alpha_stepsLabel = Label(tab1, text="α increment")
 alpha_stepsLabel.place(relx=0.1, rely=0.3, anchor='w')
-alpha_steps_entry = Entry(tab1)
+alpha_steps_entry = Entry(tab1, width=18)
 alpha_steps_entry.place(relx=0.25, rely=0.3, anchor='w')
 alpha_steps_entry.insert(END, '0.25')
 alpha_steps_entry.bind('<FocusIn>', on_entry_click_astep)
@@ -419,7 +441,7 @@ airfoil_frame = LabelFrame(tab1, bd=1)
 airfoil_frame.configure(height=25, width=172)
 airfoil_frame.grid_propagate(0)
 airfoil_frame.place(relx=0.25, rely=0.36, anchor='w')
-airfoil_sel = Label(airfoil_frame, text="No airfoil selected")
+airfoil_sel = Label(airfoil_frame, text="No airfoil selected", fg='grey', font='default 12')
 airfoil_sel.place(relx=0.5, anchor='n')
 
 submitButton_analysis = Button(tab1, text="Submit", command=submit_analysis)
@@ -492,21 +514,7 @@ cl_i = 1   # By default
 #    c = (a_max * 8 * math.pi * r * math.sin(phi) ** 2) / ((1 - a_max) * blades_num * c_l * math.cos(phi))
 #    re = (v_r * c) / (nu_mars)
 #
-#    # XFOIL #######
-#    from xfoil import XFoil
-#    xf = XFoil()
-#
-#    # Import an airfoil
-#    from xfoil.test import XXXXX
-#    xf.airfoil = XXXXX
 
-#    # Setting up the analysis parameters
-#    xf.Re = re
-#    xf.max_iter = 100
-#    xf.M = 0.7
-#
-#    # Obtaining the angle of attack, lift coefficient, drag coefficient and momentum coefficient of the airfoil
-#    a, cl, cd, cm = xf.aseq(0, 30, 0.5)
 
 
 
