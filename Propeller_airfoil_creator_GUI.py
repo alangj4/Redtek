@@ -169,7 +169,7 @@ def select_airfoil():
 
     plot_geom = FigureCanvasTkAgg(plot_figure, master=geometryframe)
     plot_geom.draw()
-    plot_geom.get_tk_widget().place(relx=0.5, rely=0.97, anchor='s')
+    plot_geom.get_tk_widget().place(relx=0.5, rely=0.98, anchor='s')
 
 #Printear el nombre del perfil sacado de root.filename
     geomLabel = Label(geometryframe, text="Airfoil geometry")
@@ -203,13 +203,14 @@ def submit_analysis():
         alpha_steps = float(alpha_steps_entry.get())
 
         clearButton_analysis = Button(tab1, text="Clear", command=clear_analysis)
-        clearButton_analysis.place(relx=0.235, rely=0.4, anchor='n')
+        clearButton_analysis.place(relx=0.225, rely=0.41, anchor='n')
 
 
         #    # XFOIL #######
+        xf = XFoil ()
         #    # Import an airfoil
-        #    from xfoil.test import XXXXX
-        #    xf.airfoil = XXXXX
+        from xfoil.test import naca0012
+        xf.airfoil = naca0012
 
         #    # Setting up the analysis parameters
         #    xf.Re = re
@@ -219,17 +220,31 @@ def submit_analysis():
         #    # Obtaining the angle of attack, lift coefficient, drag coefficient and momentum coefficient of the airfoil
         #    a, cl, cd, cm = xf.aseq(0, 30, 0.5)
 
-        xf = XFoil ()
-
         xf.Re = re
         xf.M = mach
-        xf.max_iter = 100
-        xf.airfoil = np.genfromtxt(root.filename) #, skip_header=2
+        xf.max_iter = 40
+        #xf.airfoil = np.genfromtxt(root.filename) #, skip_header=2
 
-        a, cl, cd, cm = xf.aseq(alpha_from, alpha_to, alpha_steps)
+        a = xf.aseq(alpha_from, alpha_to, alpha_steps)
+        cl = xf.aseq(alpha_from, alpha_to, alpha_steps)
 
-        print(a, cl) #Para comprobar si salen bien los datos 
+        #print(cl) #Para comprobar si salen bien los datos
 
+        plot_figure = Figure(figsize=(5,5), dpi=100)
+        plot = plot_figure.add_subplot(111)
+        plot.cla()
+        plot.plot(a, cl)
+        plot.axis([-25, 25, -3, 3])
+        plot.tick_params(width=0.5, labelsize=7)
+        plot.set_xlabel('alpha')
+        plot.set_ylabel('Cl')
+
+        for axis in ['top','bottom','left','right']:
+            plot.spines[axis].set_linewidth(0.5)
+
+        plot_cl = FigureCanvasTkAgg(plot_figure, master=cl_plot)
+        plot_cl.draw()
+        plot_cl.get_tk_widget().pack()        #place(relx=0.5, rely=0.97, anchor='s')
 
 def clear_analysis():
     global airfoil_sel
@@ -248,12 +263,23 @@ def clear_analysis():
     airfoil_frame = LabelFrame(tab1, bd=1)
     airfoil_frame.configure(height=25, width=172)
     airfoil_frame.grid_propagate(0)
-    airfoil_frame.place(relx=0.25, rely=0.34, anchor='w')
+    airfoil_frame.place(relx=0.25, rely=0.36, anchor='w')
     airfoil_sel = Label(airfoil_frame, text="No airfoil selected")
     airfoil_sel.place(relx=0.5, anchor='n')
 
     clearButton_analysis = Button(tab1, text="Clear", command=clear_analysis, state='disable')
-    clearButton_analysis.place(relx=0.235, rely=0.4, anchor='n')
+    clearButton_analysis.place(relx=0.225, rely=0.41, anchor='n')
+
+def on_entry_click_re(event):
+    if re_entry.get() == '100000':
+        re_entry.delete(0, END)
+        re_entry.insert(0, '')
+        re_entry.config(fg='black')
+
+def on_focusout_re(event):
+    if re_entry.get() == '':
+        re_entry.insert(0, '100000')
+        re_entry.config(fg = 'grey')
 
 def on_entry_click_mach(event):
     if mach_entry.get() == '0.7':
@@ -263,7 +289,7 @@ def on_entry_click_mach(event):
 
 def on_focusout_mach(event):
     if mach_entry.get() == '':
-        mach_entry.insert(0, '0.7')
+        mach_entry.insert(0, '0')
         mach_entry.config(fg = 'grey')
 
 def on_entry_click_afrom(event):
@@ -289,14 +315,14 @@ def on_focusout_ato(event):
         alpha_to_entry.config(fg = 'grey')
 
 def on_entry_click_astep(event):
-    if alpha_steps_entry.get() == '0.25':
+    if alpha_steps_entry.get() == '0.5':
         alpha_steps_entry.delete(0, END)
         alpha_steps_entry.insert(0, '')
         alpha_steps_entry.config(fg='black')
 
 def on_focusout_astep(event):
     if alpha_steps_entry.get() == '':
-        alpha_steps_entry.insert(0, '0.25')
+        alpha_steps_entry.insert(0, '0.5')
         alpha_steps_entry.config(fg = 'grey')
 
 
@@ -395,12 +421,16 @@ reLabel = Label(tab1, text="Reynolds number")
 reLabel.place(relx=0.1, rely=0.12, anchor='w')
 re_entry = Entry(tab1, width=18)
 re_entry.place(relx=0.25, rely=0.12, anchor='w')
+re_entry.insert(END, '100000')
+re_entry.bind('<FocusIn>', on_entry_click_re)
+re_entry.bind('<FocusOut>', on_focusout_re)
+re_entry.configure(fg='grey')
 
 machLabel = Label(tab1, text="Mach number")
 machLabel.place(relx=0.1, rely=0.18, anchor='w')
 mach_entry = Entry(tab1, width=18)
 mach_entry.place(relx=0.25, rely=0.18, anchor='w')
-mach_entry.insert(END, '0.7')
+mach_entry.insert(END, '0')
 mach_entry.bind('<FocusIn>', on_entry_click_mach)
 mach_entry.bind('<FocusOut>', on_focusout_mach)
 mach_entry.configure(fg='grey')
@@ -428,7 +458,7 @@ alpha_stepsLabel = Label(tab1, text="α increment")
 alpha_stepsLabel.place(relx=0.1, rely=0.3, anchor='w')
 alpha_steps_entry = Entry(tab1, width=18)
 alpha_steps_entry.place(relx=0.25, rely=0.3, anchor='w')
-alpha_steps_entry.insert(END, '0.25')
+alpha_steps_entry.insert(END, '0.5')
 alpha_steps_entry.bind('<FocusIn>', on_entry_click_astep)
 alpha_steps_entry.bind('<FocusOut>', on_focusout_astep)
 alpha_steps_entry.configure(fg='grey')
