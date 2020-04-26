@@ -14,6 +14,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import xfoil as xf
 from xfoil import XFoil
+from xfoil.model import Airfoil
 
 
 ##############################################################################
@@ -27,7 +28,7 @@ WIDTH = 1100
 
 root = Tk()
 root.title("Redtek propeller creator")
-root.resizable(width=False, height=False)
+#root.resizable(width=False, height=False)
 
 canvas = Canvas(root, height=HEIGHT, width=WIDTH)
 canvas.pack()
@@ -40,14 +41,14 @@ upframe = Frame(root)
 upframe.place(relx=0.5, rely=0.07, relwidth=0.95, relheight=0.3, anchor='n')
 
 lowframe = ttk.Notebook(root)
-lowframe.place(relx=0.5, rely=0.4, relwidth=0.99, relheight=0.575, anchor='n')
+lowframe.place(relx=0.5, rely=0.4, relwidth=0.99, relheight=0.6, anchor='n')
 
 # TAB 1 CONFIGURATION
 tab1 = ttk.Frame(lowframe)
 lowframe.add(tab1, text='Airfoil analysis')
 
-geometryframe = Canvas(tab1)
-geometryframe.place(relx=0.265, rely=0.5, relwidth=0.5, relheight=0.46, anchor='n')
+geometryframe = Frame(tab1, bd=1, relief=SUNKEN)
+geometryframe.place(relx=0.257, rely=0.5, relwidth=0.45, relheight=0.46, anchor='n')
 
 plotframe = ttk.Notebook(tab1)
 plotframe.place(relx=0.5, rely=0.5, relwidth=0.5, relheight=1, anchor='w')
@@ -74,14 +75,16 @@ lowframe.add(tab3, text='Airfoil comparison')
 ##############################################################################
 
 def submit_drone():
-    # Asegurar que lo introducido es un valor correcto
-    # VER COMO SE HACE
-    # Checkear que se han introducido todos los datos
+    # Asegurar que lo introducido es un valor numérico correcto, habrá que
+    # establecer límites de valores que se puedan introducir
+    # VER CÓMO SE HACE
     global weight
     global radio
     global prop_num
     global blade_num
     global rpm
+    global powerLabel
+    global power_reqLabel
 
     if len(weight_entry.get()) == 0:
         messagebox.showwarning("Some values are missing", "The weight entry is empty")
@@ -126,6 +129,7 @@ def submit_drone():
         clearButton_drone.place(relx=0.278, rely=0.7, anchor='n')
 
 def clear_drone():
+    global preview_img
 
     weight_entry.delete(0, END)
     radio_entry.delete(0, END)
@@ -133,10 +137,8 @@ def clear_drone():
     blade_num_entry.delete(0, END)
     rpm_entry.delete(0, END)
 
-    powerLabel = Label(upframe, text="                                       ")
-    powerLabel.place(relx=0.22, rely=0.9, anchor='w')
-    power_reqLabel = Label(upframe, text='', width=9)
-    power_reqLabel.place(relx=0.34, rely=0.9, anchor='w')
+    powerLabel.destroy()
+    power_reqLabel.destroy()
 
     preview_img = ImageTk.PhotoImage(Image.open("pr.png"))
     preview = Label(upframe, image=preview_img, bd=1, relief=SUNKEN)
@@ -150,11 +152,15 @@ def clear_drone():
 
 def select_airfoil():
 
+    # En un futuro estaría bien que el propio programa te mostrase una base de
+    # dato con todos los perfiles NACA y Selig disponibles en la carpeta
+    # airfoils-geom
+
     root.filename = filedialog.askopenfilename(initialdir="", title="Select an airfoil geometry", filetypes=((".dat files", "*.dat"),(".txt files", "*.txt")))
     airfoil_sel = Label(airfoil_frame, text=root.filename)
     airfoil_sel.place(relx=1, rely=0.5, anchor='e')
 
-    coordinates = np.genfromtxt(root.filename, skip_header=1)
+    coordinates = np.genfromtxt(root.filename, skip_header=2)
     x1 = coordinates[:,0]
     y1 = coordinates[:,1]
     plot_figure = Figure(figsize=(5.5,2.2), dpi=100)
@@ -169,23 +175,24 @@ def select_airfoil():
 
     plot_geom = FigureCanvasTkAgg(plot_figure, master=geometryframe)
     plot_geom.draw()
-    plot_geom.get_tk_widget().place(relx=0.5, rely=0.98, anchor='s')
+    plot_geom.get_tk_widget().pack()
 
-#Printear el nombre del perfil sacado de root.filename
+    #Printear el nombre del perfil sacado de root.filename
     geomLabel = Label(geometryframe, text="Airfoil geometry")
     geomLabel.place(relx=0.5, anchor='n')
 
-def findMiddle(input_list):
-    middle = float(len(input_list))/2
-    if middle % 2 != 0:
-        return input_list[int(middle - .5)]
-    else:
-        return (input_list[int(middle)], input_list[int(middle-1)])
+#def findMiddle(input_list):
+#    middle = float(len(input_list))/2
+#    if middle % 2 != 0:
+#        return input_list[int(middle - .5)]
+#    else:
+#        return (input_list[int(middle)], input_list[int(middle-1)])
 
 def submit_analysis():
-    # Asegurar que lo introducido es un valor correcto
-    # VER COMO SE HACE
-    # Checkear que se han introducido todos los datos
+    # Asegurar que lo introducido es un valor numérico correcto, habrá que
+    # establecer límites de valores que se puedan introducir
+    # VER CÓMO SE HACE
+
     global re
     global mach
     global alpha_from
@@ -206,39 +213,30 @@ def submit_analysis():
         clearButton_analysis.place(relx=0.225, rely=0.41, anchor='n')
 
 
-        #    # XFOIL #######
+        # XFOIL #######
         xf = XFoil ()
-        #    # Import an airfoil
-        from xfoil.test import naca0012
-        xf.airfoil = naca0012
 
-        #    # Setting up the analysis parameters
-        #    xf.Re = re
-        #    xf.max_iter = 100
-        #    xf.M = 0.7
-        #
-        #    # Obtaining the angle of attack, lift coefficient, drag coefficient and momentum coefficient of the airfoil
-        #    a, cl, cd, cm = xf.aseq(0, 30, 0.5)
+
+        #from xfoil.test import naca0012
+        #xf.airfoil = naca0012
 
         xf.Re = re
         xf.M = mach
-        xf.max_iter = 40
-        #xf.airfoil = np.genfromtxt(root.filename) #, skip_header=2
+        xf.max_iter = 200
+        coordinates = np.genfromtxt(root.filename, skip_header=2) #, skip_header=2
+        xf.airfoil = Airfoil(x = np.array(coordinates[:,0]), y = np.array(coordinates[:,1]))
 
-        a = xf.aseq(alpha_from, alpha_to, alpha_steps)
-        cl = xf.aseq(alpha_from, alpha_to, alpha_steps)
-        cd = xf.aseq(alpha_from, alpha_to, alpha_steps)
+        a, cl, cd, cm, cp = xf.aseq(alpha_from, alpha_to, alpha_steps)
 
-        title = 'naca0012' + ' ' + 'Re=' + str(round(re)) + '' + ' M' + str(round(mach))
+        title = 'naca0012' + ' ' + 'Re=' + str(round(re)) + '' + ' M' + str(mach)
 
         # PLOT CL VS. ALPHA
         plot_figure = Figure(figsize=(5,5), dpi=100)
         plot = plot_figure.add_subplot(111)
         plot.cla()
         plot.plot(a, cl)
-        plot.axis([-25, 25, -3, 3])
-        plot.tick_params(width=0.5, labelsize=7)
-        plot.set_title(title)
+        plot.tick_params(width=0.5, labelsize=6)
+        plot.set_title(title, fontsize=14)
         plot.set_xlabel('alpha')
         plot.set_ylabel('Cl')
 
@@ -254,9 +252,8 @@ def submit_analysis():
         plot = plot_figure.add_subplot(111)
         plot.cla()
         plot.plot(a, cd)
-        plot.axis([-25, 25, -3, 3])
-        plot.tick_params(width=0.5, labelsize=7)
-        plot.set_title(title)
+        plot.tick_params(width=0.5, labelsize=6)
+        plot.set_title(title, fontsize=14)
         plot.set_xlabel('alpha')
         plot.set_ylabel('Cd')
 
@@ -272,9 +269,8 @@ def submit_analysis():
         plot = plot_figure.add_subplot(111)
         plot.cla()
         plot.plot(cd, cl)
-        plot.axis([-25, 25, -3, 3])
-        plot.tick_params(width=0.5, labelsize=7)
-        plot.set_title(title)
+        plot.tick_params(width=0.5, labelsize=6)
+        plot.set_title(title, fontsize=14)
         plot.set_xlabel('Cd')
         plot.set_ylabel('Cl')
 
@@ -284,6 +280,16 @@ def submit_analysis():
         plot_cl = FigureCanvasTkAgg(plot_figure, master=cl_cd_plot)
         plot_cl.draw()
         plot_cl.get_tk_widget().pack()
+
+        #number = np.arange(0, 80, 1)
+        #num = np.arange(0, 4, 1)
+
+        #for i in number:
+            #for n in num:
+                #print('lista de a', a[n,i])
+            #for n in num:
+                #print('lista de cl', cl[n,i])
+
 
 def clear_analysis():
     global airfoil_sel
@@ -363,6 +369,13 @@ def on_focusout_astep(event):
     if alpha_steps_entry.get() == '':
         alpha_steps_entry.insert(0, '0.5')
         alpha_steps_entry.config(fg = 'grey')
+
+def info():
+    info_window = Toplevel()
+    info_window.title('Info about program usage')
+    titleinfo = Label(info_window, text='INFO ABOUT THE CORRECT USE OF THE PROGRAM', font='default 20 bold').pack()
+
+
 
 
 ##############################################################################
@@ -591,8 +604,9 @@ cl_i = 1   # By default
 
 
 
-
-
+# PROGRAM INFO
+button_info = Button (canvas, text="Info about", command=info)
+button_info.place(relx=0.025, rely=0.035, anchor='w')
 
 
 # QUIT PROGRAM
